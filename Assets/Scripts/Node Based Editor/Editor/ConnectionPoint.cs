@@ -7,8 +7,8 @@ public class ConnectionPoint
     public Rect ConnectionPointRect { get; private set; }
     public ConnectionPointType Type { get; private set; } = ConnectionPointType.None;
     public Node Node { get; private set;  }
-    public GUIStyle ConnectionPointStyle { get; private set; }
-    public Action<ConnectionPoint> OnClickOnConnectionPoint { get; private set; } = null;
+    private GUIStyle m_connectionPointStyle = null; 
+    private Action<ConnectionPoint> m_onClickOnConnectionPoint = null;
     #endregion
 
     #region Constructor 
@@ -16,8 +16,8 @@ public class ConnectionPoint
     {
         Node = _node;
         Type = _type;
-        ConnectionPointStyle = _style;
-        OnClickOnConnectionPoint = _onClickAction;
+        m_connectionPointStyle = _style;
+        m_onClickOnConnectionPoint = _onClickAction;
         ConnectionPointRect = new Rect(0, 0, 10.0f, 20.0f); 
     }
     #endregion
@@ -40,12 +40,9 @@ public class ConnectionPoint
         }
 
         ConnectionPointRect = _r; 
-        if (GUI.Button(ConnectionPointRect, "" /*, ConnectionPointStyle*/))
+        if (GUI.Button(ConnectionPointRect, "" , m_connectionPointStyle))
         {
-            if (OnClickOnConnectionPoint != null)
-            {
-                OnClickOnConnectionPoint(this);
-            }
+            m_onClickOnConnectionPoint?.Invoke(this);
         }
     }
     #endregion
