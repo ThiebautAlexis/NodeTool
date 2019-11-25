@@ -33,6 +33,16 @@ public class ConversationNode : Node
             switch (m_nodeType)
             {
                 case ConversationNodeType.Basic:
+                    for (int i = m_content.Count - 1; i > 0; i--)
+                    {
+                        OutPoints[i].ClearPoint();
+                        OutPoints[i] = null;
+                        OutPoints.RemoveAt(i);
+                        m_content.RemoveAt(i);
+                        Rect _rect = NodeRect;
+                        _rect.height -= (10 + MULTIPLE_CONTENT_HEIGHT);
+                        NodeRect = _rect;
+                    }
                     m_content = new List<string>();
                     m_content.Add("SAMPLE CONTENT");
                     _r.height = INITIAL_RECT_HEIGHT;
@@ -56,14 +66,13 @@ public class ConversationNode : Node
         m_content = new List<string>();
         m_content.Add("SAMPLE CONTENT"); 
     }
-
-
     #endregion
 
     #region Methods
     public override void Draw()
     {
-        base.Draw(); 
+        GUI.Box(NodeRect, NodeTitle, m_nodeStyle);
+        InPoint.Draw(NodeRect);
         switch (m_nodeType)
         {
             case ConversationNodeType.Basic:
@@ -83,6 +92,7 @@ public class ConversationNode : Node
         m_title = EditorGUI.TextField(_r, new GUIContent("Character Speaking"), m_title);
         _r = new Rect(NodeRect.position.x + 10, NodeRect.position.y + 40, NodeRect.width - 20, BASIC_CONTENT_HEIGHT);
         m_content[0] = EditorGUI.TextArea(_r, m_content[0]);
+        OutPoints.ForEach(p => p.Draw(NodeRect));
     }
 
     private void DrawMultipleChoicesNode()
@@ -93,9 +103,13 @@ public class ConversationNode : Node
         {
             _r = new Rect(NodeRect.position.x + 30, NodeRect.position.y + 40 + (i * (MULTIPLE_CONTENT_HEIGHT + 10)), NodeRect.width - 50, MULTIPLE_CONTENT_HEIGHT); 
             m_content[i] = EditorGUI.TextArea(_r, m_content[i]);
+            OutPoints[i].Draw(_r);
             _r = new Rect(NodeRect.position.x + 10, NodeRect.position.y + 40 + (i * (MULTIPLE_CONTENT_HEIGHT + 10)) + (MULTIPLE_CONTENT_HEIGHT / 2) - 10, 20, 20);
             if(GUI.Button(_r, "-"))
             {
+                OutPoints[i].ClearPoint(); 
+                OutPoints[i] = null; 
+                OutPoints.RemoveAt(i);
                 m_content.RemoveAt(i);
                 Rect _rect = NodeRect;
                 _rect.height -= (10 + MULTIPLE_CONTENT_HEIGHT);
@@ -107,6 +121,7 @@ public class ConversationNode : Node
         if (GUI.Button(_r, "+"))
         {
             m_content.Add("");
+            OutPoints.Add(new ConnectionPoint(this, ConnectionPointType.Out, m_outPointStyle, m_onClickOutPoint));
             Rect _rect = NodeRect;
             _rect.height += (10 + MULTIPLE_CONTENT_HEIGHT);
             NodeRect = _rect; 

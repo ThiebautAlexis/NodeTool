@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq; 
 using UnityEngine;
@@ -8,7 +8,7 @@ public class NodeBasedEditor : EditorWindow
 {
     #region Fields and Properties 
     protected List<Node> m_nodes = new List<Node>();
-    protected List<Connection> m_connections = new List<Connection>();
+    //protected List<Connection> m_connections = new List<Connection>();
 
     protected ConnectionPoint m_inSelectedPoint = null;
     protected ConnectionPoint m_outSelectionPoint = null;
@@ -18,6 +18,7 @@ public class NodeBasedEditor : EditorWindow
 
     #region Styles
     protected GUIStyle m_defaultNodeStyle = null;
+    protected GUIStyle m_defaultConditionStyle = null;
     protected GUIStyle m_selectedNodeStyle = null; 
     protected GUIStyle m_inPointStyle = null;
     protected GUIStyle m_outPointStyle = null;
@@ -50,19 +51,8 @@ public class NodeBasedEditor : EditorWindow
     }
 
     private void CreateConnection()
-    {
-        if (m_connections == null)
-            m_connections = new List<Connection>();
-        m_connections.Add(new Connection(m_inSelectedPoint, m_outSelectionPoint, OnClickRemoveConnection));
-    }
-
-    private void DrawConnections()
-    {
-        if (m_connections == null) return;
-        for (int i = 0; i < m_connections.Count; i++)
-        {
-            m_connections[i].Draw(); 
-        }
+    {        
+        m_inSelectedPoint.AddConnection(m_outSelectionPoint);
     }
 
     private void DrawConnectionLine(Event _e)
@@ -142,24 +132,10 @@ public class NodeBasedEditor : EditorWindow
         }
     }
 
-    private void OnClickRemoveConnection(Connection _connection)
-    {
-        if(m_connections == null)
-        {
-            m_connections = new List<Connection>();
-            return; 
-        }
-        m_connections.Remove(_connection);
-    }
-
     protected void OnClickRemoveNode(Node _node)
     {
-        if(m_connections != null)
-        {
-            m_connections.Where(c => c.InPoint == _node.InPoint || c.OutPoint == _node.OutPoint).ToList().ForEach(c => m_connections.Remove(c));
-        }
-
-        m_nodes.Remove(_node); 
+        m_nodes.Remove(_node);
+        _node = null;
     }
 
     private void OnDrag(Vector2 _delta)
@@ -203,7 +179,7 @@ public class NodeBasedEditor : EditorWindow
         }
     }
 
-    private void ShowContextMenu(Vector2 _mousePosition)
+    protected virtual void ShowContextMenu(Vector2 _mousePosition)
     {
         GenericMenu _genericMenu = new GenericMenu();
         _genericMenu.AddItem(new GUIContent("Add Node"), false, () => AddNodeAtPosition(_mousePosition));
@@ -263,7 +239,6 @@ public class NodeBasedEditor : EditorWindow
         DrawGrid(100, 0.4f, Color.black);
 
         DrawNodes();
-        DrawConnections();
 
         DrawConnectionLine(Event.current); 
         ProcessEditorEvents(Event.current);

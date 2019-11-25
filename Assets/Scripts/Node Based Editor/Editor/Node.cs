@@ -13,14 +13,19 @@ public class Node
     private GUIStyle m_defaultNodeStyle = null;
     private GUIStyle m_selectedNodeStyle = null;
 
-
-    public ConnectionPoint InPoint  {get; private set; }
-    public ConnectionPoint OutPoint { get; protected set; }
+    public ConnectionPoint InPoint  {get; protected set; }
+    public List<ConnectionPoint> OutPoints { get; protected set; } = new List<ConnectionPoint>();
 
     private bool m_isDragged = false;
     public bool IsSelected { get; private set; } = false;
 
-    private Action<Node> m_onRemoveNode = null; 
+    protected  Action<Node> m_onRemoveNode = null;
+
+    #region Extra Out Point Settings
+    protected Action<ConnectionPoint> m_onClickOutPoint = null;
+    protected GUIStyle m_outPointStyle = null;
+    #endregion 
+
     #endregion
 
     #region Constructor
@@ -44,9 +49,13 @@ public class Node
         m_selectedNodeStyle = _selectedNodeStyle;
         m_nodeStyle = m_defaultNodeStyle; 
         InPoint = new ConnectionPoint(this, ConnectionPointType.In, _inPointStyle, _onClickInPoint);
-        OutPoint = (new ConnectionPoint(this, ConnectionPointType.Out, _outPointStyle, _onClickOutPoint));
+        if (OutPoints == null) OutPoints = new List<ConnectionPoint>();
+        m_onClickOutPoint = _onClickOutPoint;
+        m_outPointStyle = _outPointStyle; 
+        OutPoints.Add(new ConnectionPoint(this, ConnectionPointType.Out, m_outPointStyle, m_onClickOutPoint));
+
         m_onRemoveNode = _onRemoveNodeAction;
-    }
+    }   
     #endregion 
 
     #region Methods
@@ -65,12 +74,22 @@ public class Node
     /// </summary>
     public virtual void Draw()
     {
-        InPoint.Draw();
-        OutPoint.Draw();
+        InPoint.Draw(NodeRect);
+        OutPoints.ForEach(p => p.Draw(NodeRect));
         GUI.Box(NodeRect, NodeTitle, m_nodeStyle);
     }
 
-    protected void OnClickRemoveNode() => m_onRemoveNode?.Invoke(this); 
+    protected void OnClickRemoveNode()
+    {
+        InPoint.ClearPoint();
+        for (int i = 0; i < OutPoints.Count; i++)
+        {
+            OutPoints[i].ClearPoint();
+        }
+        InPoint = null;
+        OutPoints = null; 
+        m_onRemoveNode?.Invoke(this);       
+    }
 
     protected virtual void ProcessContextMenu()
     {
@@ -124,6 +143,5 @@ public class Node
         }
         return false;
     }
-
     #endregion
 }

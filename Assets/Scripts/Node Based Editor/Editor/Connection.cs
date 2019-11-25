@@ -9,6 +9,8 @@ public class Connection
     public ConnectionPoint OutPoint { get; private set; }
 
     private Action<Connection> m_onClickConnection = null;
+
+    private int m_id = 0; 
     #endregion
 
     #region Constructor
@@ -17,6 +19,9 @@ public class Connection
         InPoint = _inPoint;
         OutPoint = _outPoint;
         m_onClickConnection = _onClickConnectionAction;
+        m_id = UnityEngine.Random.Range(0, 10000);
+        InPoint.Connections.Add(this);
+        OutPoint.Connections.Add(this); 
     }
     #endregion
 
@@ -34,8 +39,9 @@ public class Connection
             );
         if (Handles.Button((InPoint.ConnectionPointRect.center + OutPoint.ConnectionPointRect.center) * 0.5f, Quaternion.identity, 4, 8, Handles.RectangleHandleCap))
         {
+            Debug.Log("Click"); 
             m_onClickConnection?.Invoke(this);
         }
     }
-    #endregion 
+    #endregion
 }
