@@ -213,7 +213,7 @@ public class NodeBasedEditor : EditorWindow
     #endregion
 
     #region Unity Methods
-    private void OnEnable()
+    protected virtual void OnEnable()
     {
         m_defaultNodeStyle = new GUIStyle();
         m_defaultNodeStyle.normal.background = EditorGUIUtility.Load("builtin skins/darkskin/images/node1.png") as Texture2D;
@@ -233,7 +233,7 @@ public class NodeBasedEditor : EditorWindow
         m_outPointStyle.active.background = EditorGUIUtility.Load("builtin skins/darkskin/images/btn right on.png") as Texture2D;
         m_outPointStyle.border = new RectOffset(4, 4, 12, 12);
     }
-    private void OnGUI()
+    protected virtual void OnGUI()
     {
         DrawGrid(20, 0.2f, Color.black);
         DrawGrid(100, 0.4f, Color.black);
