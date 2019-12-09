@@ -8,43 +8,40 @@ using UnityEditor;
 public class ConversationNode : Node
 {
     #region Constants
-    public const float INITIAL_RECT_HEIGHT = 200;
+    public const float INITIAL_RECT_HEIGHT = 230;
     public const float INITIAL_RECT_WIDTH = 300;
     private const float TITLE_HEIGHT = 20; 
     private const float BASIC_CONTENT_HEIGHT = 140;
-    private const float MULTIPLE_CONTENT_HEIGHT = 60; 
+    private const float MULTIPLE_CONTENT_HEIGHT = 60;
     #endregion
 
     #region Fields and Properties
-    private string m_title = string.Empty;
-    private List<string> m_content = new List<string>();
-
-    private ConversationNodeType m_nodeType = ConversationNodeType.Basic; 
+    private ConversationPart m_part = null; 
     public ConversationNodeType NodeType
     {
         get
         {
-            return m_nodeType;
+            return m_part.Type;
         }
         set
         {
-            m_nodeType = value;
+            m_part.Type = value;
             Rect _r = NodeRect;
-            switch (m_nodeType)
+            switch (m_part.Type)
             {
                 case ConversationNodeType.Basic:
-                    for (int i = m_content.Count - 1; i > 0; i--)
+                    for (int i = m_part.Contents.Count - 1; i > 0; i--)
                     {
                         OutPoints[i].ClearPoint();
                         OutPoints[i] = null;
                         OutPoints.RemoveAt(i);
-                        m_content.RemoveAt(i);
+                        m_part.Contents.RemoveAt(i);
                         Rect _rect = NodeRect;
                         _rect.height -= (10 + MULTIPLE_CONTENT_HEIGHT);
                         NodeRect = _rect;
                     }
-                    m_content = new List<string>();
-                    m_content.Add("SAMPLE CONTENT");
+                    m_part.Contents = new List<string>();
+                    m_part.Contents.Add("SAMPLE CONTENT");
                     _r.height = INITIAL_RECT_HEIGHT;
                     break;
                 case ConversationNodeType.MultipleChoices:
@@ -62,9 +59,7 @@ public class ConversationNode : Node
     public ConversationNode(Vector2 _position, float _width, float _height, GUIStyle _nodeStyle, GUIStyle _selectedNodeStyle, GUIStyle _inPointStyle, GUIStyle _outPointStyle, Action<ConnectionPoint> _onClickInPoint, Action<ConnectionPoint> _onClickOutPoint, Action<Node> _onRemoveNodeAction) 
          : base( _position,  _width,  _height,  _nodeStyle,  _selectedNodeStyle,  _inPointStyle,  _outPointStyle, _onClickInPoint, _onClickOutPoint, _onRemoveNodeAction)
     {
-        m_title = "Speaking Character";
-        m_content = new List<string>();
-        m_content.Add("SAMPLE CONTENT"); 
+        m_part = new ConversationPart(); 
     }
     #endregion
 
@@ -73,7 +68,7 @@ public class ConversationNode : Node
     {
         GUI.Box(NodeRect, NodeTitle, m_nodeStyle);
         InPoint.Draw(NodeRect);
-        switch (m_nodeType)
+        switch (m_part.Type)
         {
             case ConversationNodeType.Basic:
                 DrawBasicNode();
@@ -89,20 +84,26 @@ public class ConversationNode : Node
     private void DrawBasicNode()
     {
         Rect _r = new Rect(NodeRect.position.x + 10, NodeRect.position.y + 15, NodeRect.width - 20, TITLE_HEIGHT);
-        m_title = EditorGUI.TextField(_r, new GUIContent("Character Speaking"), m_title);
-        _r = new Rect(NodeRect.position.x + 10, NodeRect.position.y + 40, NodeRect.width - 20, BASIC_CONTENT_HEIGHT);
-        m_content[0] = EditorGUI.TextArea(_r, m_content[0]);
+        GUI.Label(_r, m_part.Speaker);
+        _r.y += 25; 
+        string[] _test = new string[] { "test", "Encore un", "Et un dernier test" };
+        EditorGUI.Popup(_r, 0, _test); 
+        _r = new Rect(NodeRect.position.x + 10, NodeRect.position.y + 70, NodeRect.width - 20, BASIC_CONTENT_HEIGHT);
+        Color _original = GUI.backgroundColor;
+        GUI.backgroundColor = new Color(1.0f, 1.0f, 1.0f, .5f); 
+        GUI.Box(_r, m_part.Contents[0]);
+        GUI.backgroundColor = _original; 
+        //EditorGUI.TextArea(_r, m_part.Contents[0]);
         OutPoints.ForEach(p => p.Draw(NodeRect));
     }
 
     private void DrawMultipleChoicesNode()
     {
         Rect _r = new Rect(NodeRect.position.x + 10, NodeRect.position.y + 15, NodeRect.width - 20, 20);
-        m_title = EditorGUI.TextField(_r, new GUIContent("Character Speaking"), m_title);
-        for (int i = 0; i < m_content.Count; i++)
+        for (int i = 0; i < m_part.Contents.Count; i++)
         {
-            _r = new Rect(NodeRect.position.x + 30, NodeRect.position.y + 40 + (i * (MULTIPLE_CONTENT_HEIGHT + 10)), NodeRect.width - 50, MULTIPLE_CONTENT_HEIGHT); 
-            m_content[i] = EditorGUI.TextArea(_r, m_content[i]);
+            _r = new Rect(NodeRect.position.x + 30, NodeRect.position.y + 40 + (i * (MULTIPLE_CONTENT_HEIGHT + 10)), NodeRect.width - 50, MULTIPLE_CONTENT_HEIGHT);
+            m_part.Contents[i] = EditorGUI.TextArea(_r, m_part.Contents[i]);
             OutPoints[i].Draw(_r);
             _r = new Rect(NodeRect.position.x + 10, NodeRect.position.y + 40 + (i * (MULTIPLE_CONTENT_HEIGHT + 10)) + (MULTIPLE_CONTENT_HEIGHT / 2) - 10, 20, 20);
             if(GUI.Button(_r, "-"))
@@ -110,7 +111,7 @@ public class ConversationNode : Node
                 OutPoints[i].ClearPoint(); 
                 OutPoints[i] = null; 
                 OutPoints.RemoveAt(i);
-                m_content.RemoveAt(i);
+                m_part.Contents.RemoveAt(i);
                 Rect _rect = NodeRect;
                 _rect.height -= (10 + MULTIPLE_CONTENT_HEIGHT);
                 NodeRect = _rect;
@@ -120,7 +121,7 @@ public class ConversationNode : Node
         _r = new Rect(NodeRect.position.x + NodeRect.width - 30, NodeRect.position.y + NodeRect.height - 30, 20, 20);
         if (GUI.Button(_r, "+"))
         {
-            m_content.Add("");
+            m_part.Contents.Add("");
             OutPoints.Add(new ConnectionPoint(this, ConnectionPointType.Out, m_outPointStyle, m_onClickOutPoint));
             Rect _rect = NodeRect;
             _rect.height += (10 + MULTIPLE_CONTENT_HEIGHT);
@@ -133,7 +134,7 @@ public class ConversationNode : Node
         GenericMenu _genericMenu = new GenericMenu();
         _genericMenu.AddItem(new GUIContent("Remove Node"), false, OnClickRemoveNode);
         _genericMenu.AddSeparator("");
-        switch (m_nodeType)
+        switch (m_part.Type)
         {
             case ConversationNodeType.Basic:
                 _genericMenu.AddDisabledItem(new GUIContent("Set Node as Basic Node"));
@@ -151,8 +152,3 @@ public class ConversationNode : Node
     #endregion
 }
 
-public enum ConversationNodeType
-{
-    Basic, 
-    MultipleChoices 
-}
